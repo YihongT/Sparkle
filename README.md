@@ -38,25 +38,7 @@ Vision language models (VLMs) perform well on many tasks but often fail at spati
 
 
 ### Data Generation
-Static (train):
-```
-python data.py --run_type static --num_train 1000 --num_basic_points 3 --num_noise_points 2 --num_direction 8 --textobj --abs
-```
-
-Static (test):
-```
-python data.py --run_type static --num_test 200 --num_basic_points 3 --num_noise_points 2 --num_direction 8 --textobj
-```
-
-Shortest path (test):
-```
-python data.py --run_type shortest --num_test 200 --ngrid 5 --textgrid
-```
-
-TSP (test):
-```
-python data.py --run_type tsp --num_test 200 --num_basic_points 5 --textobj
-```
+See `run.sh` for ready-to-run data generation examples (static/train/test, shortest path, TSP). Adjust parameters there as needed.
 
 
 ### Model Training & Evaluation
@@ -84,5 +66,4 @@ If you find this work helpful for your research, please consider giving this rep
     pages="4083--4103"
 }
 ```
-
 

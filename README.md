@@ -44,7 +44,7 @@ See `run.sh` for ready-to-run data generation examples (static/train/test, short
 ### Model Training & Evaluation
 
 
-We recommend using the latest version of **ms-swift** for training and evaluation. As the repository is actively maintained, please refer to the official [ms-swift](https://github.com/InternLM/ms-swift) for the most up-to-date instructions.
+We recommend using the latest version of **ms-swift** for training and evaluation. As the repository is actively maintained, please refer to the official [ms-swift](https://github.com/modelscope/ms-swift) for the most up-to-date instructions.
 
 ## 📃 License
 

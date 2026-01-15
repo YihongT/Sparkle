@@ -36,10 +36,33 @@ Vision language models (VLMs) perform well on many tasks but often fail at spati
 
 ## 🛠️ Usage
 
-TBD
+
+### Data Generation
+Static (train):
+```
+python data.py --run_type static --num_train 1000 --num_basic_points 3 --num_noise_points 2 --num_direction 8 --textobj --abs
+```
+
+Static (test):
+```
+python data.py --run_type static --num_test 200 --num_basic_points 3 --num_noise_points 2 --num_direction 8 --textobj
+```
+
+Shortest path (test):
+```
+python data.py --run_type shortest --num_test 200 --ngrid 5 --textgrid
+```
+
+TSP (test):
+```
+python data.py --run_type tsp --num_test 200 --num_basic_points 5 --textobj
+```
 
 
+### Model Training & Evaluation
 
+
+We recommend using the latest version of **ms-swift** for training and evaluation. As the repository is actively maintained, please refer to the official [ms-swift](https://github.com/InternLM/ms-swift)(https://github.com/InternLM/ms-swift) for the most up-to-date instructions.
 
 ## 📃 License
 
@@ -52,11 +75,13 @@ This project is released under the [license](LICENSE).
 If you find this work helpful for your research, please consider giving this repo a star ⭐ and citing our paper:
 
 ```bibtex
-@article{tang2024sparkle,
-  title={Sparkle: Mastering Basic Spatial Capabilities in Vision Language Models Elicits Generalization to Spatial Reasoning},
-  author={Tang, Yihong and Qu, Ao and Wang, Zhaokai and Zhuang, Dingyi and Wu, Zhaofeng and Ma, Wei and Wang, Shenhao and Zheng, Yunhan and Zhao, Zhan and Zhao, Jinhua},
-  journal={arXiv preprint arXiv:2410.16162},
-  year={2024}
+@inproceedings{tang2025sparkle,
+    title = "Sparkle: Mastering Basic Spatial Capabilities in Vision Language Models Elicits Generalization to Spatial Reasoning",
+    author = "Tang, Yihong and Qu, Ao and Wang, Zhaokai and Zhuang, Dingyi and Wu, Zhaofeng and Ma, Wei and Wang, Shenhao and Zheng, Yunhan and Zhao, Zhan and Zhao, Jinhua",
+    booktitle = "Findings of the Association for Computational Linguistics: EMNLP 2025",
+    year={2025},
+    doi="10.18653/v1/2025.findings-emnlp.217",
+    pages="4083--4103"
 }
 ```
 

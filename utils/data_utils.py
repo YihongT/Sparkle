@@ -9,7 +9,6 @@ from itertools import combinations
 from scipy.spatial import distance
 from itertools import combinations
 from scipy.spatial.distance import euclidean
-from python_tsp.exact import solve_tsp_dynamic_programming
 from prompts.data import DISTANCE_TEMPLATES, DIRECTION_TEMPLATES, SIZE_TEMPLATES, POSITION_TEMPLATES, POSITION_PHRASES, DIRECTION_PHRASES, DISTANCE_INTRO_PHRASES, INTRO_PHRASES, QUERIES, DISTANCE_COMPARISON_TEMPLATES, POSITION_DESCRIPTION_TEMPLATES
 from prompts.data import NEW_POSITION_RELATIVE_QUERIES, NEW_DISTANCE_ABSOLUTE_QUERIES, NEW_DISTANCE_COMPARE_QUERIES, NEW_DIRECTION_QUERIES, NEW_POSITION_ABSOLUTE_QUERIES, DIRECTION_QUERIES, DISTANCE_QUERIES, POSITION_QUERIES
 
@@ -383,6 +382,58 @@ def calculate_position(point):
         else:
             return "top right"
         
+
+def solve_open_tsp_dynamic_programming(distance_matrix, start_idx=None):
+    num_points = len(distance_matrix)
+    if num_points == 0:
+        return [], 0.0
+    if num_points == 1:
+        return [0], 0.0
+
+    full_mask = (1 << num_points) - 1
+    dp = {}
+    parent = {}
+
+    if start_idx is None:
+        for idx in range(num_points):
+            state = (1 << idx, idx)
+            dp[state] = 0.0
+            parent[state] = None
+    else:
+        state = (1 << start_idx, start_idx)
+        dp[state] = 0.0
+        parent[state] = None
+
+    for mask in range(full_mask + 1):
+        for last in range(num_points):
+            state = (mask, last)
+            if state not in dp:
+                continue
+            current_cost = dp[state]
+            for nxt in range(num_points):
+                if mask & (1 << nxt):
+                    continue
+                next_mask = mask | (1 << nxt)
+                next_state = (next_mask, nxt)
+                next_cost = current_cost + distance_matrix[last][nxt]
+                if next_state not in dp or next_cost < dp[next_state]:
+                    dp[next_state] = next_cost
+                    parent[next_state] = state
+
+    end_state = min(
+        ((full_mask, last) for last in range(num_points) if (full_mask, last) in dp),
+        key=lambda state: dp[state]
+    )
+
+    permutation = []
+    state = end_state
+    while state is not None:
+        permutation.append(state[1])
+        state = parent[state]
+    permutation.reverse()
+
+    return permutation, dp[end_state]
+
 
 def calculate_direction(point1, point2, num_direction=8, primary_span=22.5):
     x1, y1 = point1
@@ -787,25 +838,13 @@ def generate_tsp_data_worker(args, index, data_type):
             if i != j:
                 distance_matrix[i][j] = euclidean(points[i], points[j])
 
-    # Solve the TSP using dynamic programming
-    # distance_matrix[:, 0] = 0 # for open tsp problem
-    permutation, distance = solve_tsp_dynamic_programming(distance_matrix)
-    
-    # print(f'permutation: {type(permutation)}\n{permutation}')
-    # print(f'distance: {type(distance)}\n{distance}')
-    # print(f'distance_matrix: {type(distance_matrix)}\n{distance_matrix}')
-    
-    if args.tsp_type == 'free' or args.num_basic_points == 3:
-        
-        close_permutation = permutation + [permutation[0]]
-        close_distances = [distance_matrix[close_permutation[i]][close_permutation[i+1]] for i in range(num_points)]
-        # break on the largest distance
-        max_distance = max(close_distances)
-        max_index = close_distances.index(max_distance)
-        if max_index < num_points-1:
-            close_permutation = close_permutation[:-1]
-            permutation = close_permutation[max_index+1:] + close_permutation[:max_index+1]
-            distance = sum([distance_matrix[permutation[i]][permutation[i+1]] for i in range(num_points-1)])
+    if args.tsp_type == 'fixstart':
+        start_idx = random.randrange(num_points)
+        permutation, distance = solve_open_tsp_dynamic_programming(distance_matrix, start_idx=start_idx)
+    elif args.tsp_type == 'free':
+        permutation, distance = solve_open_tsp_dynamic_programming(distance_matrix)
+    else:
+        raise ValueError("Invalid tsp_type")
     
     return {
         'index': index,

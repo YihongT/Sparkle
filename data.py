@@ -32,6 +32,14 @@ def format_tsp_question(template, value):
     )
 
 
+def get_tsp_question_templates(tsp_type):
+    if tsp_type == 'fixstart':
+        return [template for template in TSP_QUESTION_TEMPLATES if '{start_color}' in template]
+    if tsp_type == 'free':
+        return [template for template in TSP_QUESTION_TEMPLATES if '{start_color}' not in template]
+    raise ValueError("Invalid tsp_type")
+
+
 def generate_static_data(args, num_workers=4):
     multiprocessing.set_start_method('spawn')
 
@@ -228,13 +236,18 @@ def generate_tsp_qa(args):
         raise NotImplementedError
     
     if args.num_test > 0:
+        templates = get_tsp_question_templates(args.tsp_type)
         if os.path.exists(f'{args.data_dir}/{args.test_folder}/test.json'):
             existing_test = load_json(f'{args.data_dir}/{args.test_folder}/test.json')
             has_unformatted_template = any(
                 '{objects_string}' in sample.get('question', '') or '{num_objects}' in sample.get('question', '')
                 for sample in existing_test.values()
             )
-            if not has_unformatted_template:
+            if args.tsp_type == 'fixstart':
+                has_wrong_prompt_type = any('Starts at the ' not in sample.get('question', '') for sample in existing_test.values())
+            else:
+                has_wrong_prompt_type = any('Starts at the ' in sample.get('question', '') for sample in existing_test.values())
+            if not has_unformatted_template and not has_wrong_prompt_type:
                 print(f"QA data already exists for {args.test_folder}")
                 return
             print(f"Regenerating stale QA data for {args.test_folder}")
@@ -244,7 +257,7 @@ def generate_tsp_qa(args):
         tsp_qa = {}
         for key, value in test_info.items():
             gt = [value['colors'][idx] for idx in value['permutation']]            
-            question = format_tsp_question(random.choice(TSP_QUESTION_TEMPLATES), value)
+            question = format_tsp_question(random.choice(templates), value)
             tsp_qa[key] = {'question': question, 'answer': gt}
             
         with open(f'{args.data_dir}/{args.test_folder}/test.json', 'w', encoding='utf-8') as f:

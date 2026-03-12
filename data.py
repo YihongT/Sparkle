@@ -18,6 +18,20 @@ from utils.data_utils import (
 from utils.io_utils import load_json
 
 
+def format_tsp_question(template, value):
+    objects = value['colors']
+    permutation = value['permutation']
+    start_object = objects[permutation[0]]
+    objects_string = '\n'.join(f'- {obj}' for obj in objects)
+
+    return template.format(
+        num_objects=len(objects),
+        objects_string=objects_string,
+        start_color=start_object,
+        objects=json.dumps(objects, ensure_ascii=False),
+    )
+
+
 def generate_static_data(args, num_workers=4):
     multiprocessing.set_start_method('spawn')
 
@@ -215,15 +229,22 @@ def generate_tsp_qa(args):
     
     if args.num_test > 0:
         if os.path.exists(f'{args.data_dir}/{args.test_folder}/test.json'):
-            print(f"QA data already exists for {args.test_folder}")
-            return
+            existing_test = load_json(f'{args.data_dir}/{args.test_folder}/test.json')
+            has_unformatted_template = any(
+                '{objects_string}' in sample.get('question', '') or '{num_objects}' in sample.get('question', '')
+                for sample in existing_test.values()
+            )
+            if not has_unformatted_template:
+                print(f"QA data already exists for {args.test_folder}")
+                return
+            print(f"Regenerating stale QA data for {args.test_folder}")
         data_dir = f'{args.data_dir}/{args.test_folder}'
         test_info = load_json(f'{data_dir}/test_info.json')
         
         tsp_qa = {}
         for key, value in test_info.items():
             gt = [value['colors'][idx] for idx in value['permutation']]            
-            question = random.choice(TSP_QUESTION_TEMPLATES)
+            question = format_tsp_question(random.choice(TSP_QUESTION_TEMPLATES), value)
             tsp_qa[key] = {'question': question, 'answer': gt}
             
         with open(f'{args.data_dir}/{args.test_folder}/test.json', 'w', encoding='utf-8') as f:

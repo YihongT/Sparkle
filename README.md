@@ -10,9 +10,6 @@ Received [**Best Paper Award**](https://raw.githubusercontent.com/YihongT/Sparkl
 
 
 
-**Code will be released soon. Stay tuned!**
-
-
 
 
 ## ⭐️ Highlights
